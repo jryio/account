@@ -1,0 +1,8 @@
+/* Text.css */
+.text {
+  white-space: pre-line; /* This preserves line breaks and collapses whitespace */
+}
+
+#text br {
+  margin-bottom: 1em; /* Adjust this value as needed for proper spacing */
+}

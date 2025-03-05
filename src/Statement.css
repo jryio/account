@@ -1,0 +1,28 @@
+.statement {
+  font-weight: bold;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  position: relative;
+}
+
+.statement:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.statement-input {
+  font-weight: bold;
+  width: auto;
+  min-width: 50px;
+  border: 1px solid #ccc;
+  padding: 2px 4px;
+  font-family: inherit;
+  font-size: inherit;
+  background: #fff;
+  text-align: right;
+}
+
+.statement-input:focus {
+  outline: 2px solid #007bff;
+  border-color: #007bff;
+}

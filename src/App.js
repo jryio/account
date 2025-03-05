@@ -6,22 +6,34 @@ import "./App.css";
 import Section from "./Section";
 import Nav from "./Nav";
 
-const textFiles = require('./texts/compiled.json')
+const textFiles = require("./texts/compiled.json");
 const textVars = Object.fromEntries(
-  Object
-    .entries(textFiles)
-    .map(([filename, text]) => [filename, [...parse(text), text]])
+  Object.entries(textFiles).map(([filename, text]) => [
+    filename,
+    [...parse(text), text],
+  ])
 );
 
 function App() {
   let { page } = useParams();
+  console.log("DEBUG -> ", {
+    page,
+    textVarKeys: Object.keys(textVars),
+    match: textVars[page],
+  });
   if (!textVars[page]) return <Navigate to="/soda" />;
   const [ast, astState, rawText] = textVars[page];
 
   return (
     <div className="App">
       <Nav textVars={textVars} />
-      <Section key={page} ast={ast} astState={astState} rawText={rawText} page={page} />
+      <Section
+        key={page}
+        ast={ast}
+        astState={astState}
+        rawText={rawText}
+        page={page}
+      />
     </div>
   );
 }

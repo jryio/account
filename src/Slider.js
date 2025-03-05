@@ -2,8 +2,20 @@ import React from "react";
 import "./Slider.css";
 
 function Slider(props) {
+  // Clamp function to ensure values stay within bounds
+  function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+  }
+
   function handleChange(event) {
-    props.addField(props.variable, event.target.value);
+    // Clamp the value to ensure it stays within min and max
+    const clampedValue = clamp(
+      parseFloat(event.target.value),
+      props.value.min,
+      props.value.max
+    );
+
+    props.addField(props.variable, clampedValue);
   }
 
   function getStep(s, max) {
@@ -18,12 +30,20 @@ function Slider(props) {
       }
     }
   }
+
+  // Clamp the displayed value for the slider, even if the actual value is outside bounds
+  const clampedDisplayValue = clamp(
+    parseFloat(props.valueFromState),
+    props.value.min,
+    props.value.max
+  );
+
   return (
     <span className="slider">
       <input
         type="range"
         onChange={(e) => handleChange(e)}
-        value={props.valueFromState}
+        value={clampedDisplayValue}
         step={getStep(props.value.formatString, props.value.max)}
         max={props.value.max}
         min={props.value.min}

@@ -1,0 +1,8 @@
+:8081 {
+    root * ./build
+    @staticAssets {
+        path_regexp staticAssets \.(js|css|png|jpg|jpeg|gif|svg|ico|webp|woff2?|ttf|eot|txt|json|map)$
+    }
+    try_files {path} {path}/ /index.html
+    file_server
+}

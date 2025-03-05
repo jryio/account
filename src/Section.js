@@ -21,16 +21,21 @@ Prism.languages.account = {
 function Section({ ast, astState, page, rawText }) {
   const [viewSource, setViewSource] = useState(false);
   const [state, setState] = useState(readFields());
-  const [historyState, setHistoryState] =
-    useState(new URLSearchParams(window.location.search).toString())
+  const [historyState, setHistoryState] = useState(
+    new URLSearchParams(window.location.search).toString()
+  );
 
   function addField(k, v) {
-    const newState = { ...state, [k]: v }
-    const newHistoryState = new URLSearchParams(historyState)
-    newHistoryState.set(k, v)
-    setHistoryState(newHistoryState.toString())
-    window.history.replaceState({}, null, `/${page}?${newHistoryState.toString()}`)
-    setState(newState)
+    const newState = { ...state, [k]: v };
+    const newHistoryState = new URLSearchParams(historyState);
+    newHistoryState.set(k, v);
+    setHistoryState(newHistoryState.toString());
+    window.history.replaceState(
+      {},
+      null,
+      `/${page}?${newHistoryState.toString()}`
+    );
+    setState(newState);
     return v;
   }
 
@@ -62,7 +67,13 @@ function Section({ ast, astState, page, rawText }) {
               i={i}
               {...o}
             />
-            <Statement valueFromState={state[o.variable]} i={i} {...o} />
+            <Statement
+              key={`statement-${o.variable}`}
+              addField={addField}
+              valueFromState={state[o.variable]}
+              i={i}
+              {...o}
+            />
           </span>
         );
 
