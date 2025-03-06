@@ -1,0 +1,27 @@
+:money_with_wings: You are a freelancer software engineer.
+
+As an employee you would want to earn a salary of ${300000:salary} dollars per year (${=(1.0 - marginalTaxRate(salary)) * salary:takehome} after an effective federal income tax of {=marginalTaxRate(salary)*100:federal_effective}%)
+
+
+
+→ :chart_with_downwards_trend:
+
+Your expenses are :house: Rent ${3200-3800:rent} + :hospital: Health Insurance ${300-900:health_insurance} + 🔌 Utilities ${50-250:utilities} :computer: You will need to pay for tools, services, and software to do your job ${0-1000:monthly_tools} per month and ${0-10000:yearly_tools} per year for a total annual expense of ${=(health_insurance + yearly_tools + ((rent + monthly_tools)*12)):expenses_annual} per year.
+
+
+
+→ :money_with_wings:
+After expenses you'll be left with :bank: ${=takehome-expenses_annual:taxes_salary}
+
+
+
+→ :beach_umbrella:
+
+You will want to take {0-7:vacation_weeks} weeks of vacation, {0-20:holidays} holidays, and allow for {0-25:sick_days} sick days. You will want to spend {0-10:professional_development} days a year attending conferences and learning. You will work :calendar: {=(52 * 5) - (vacation_weeks * 5) - holidays - sick_days - professional_development:work_days} days per year
+
+
+You will work {4-16:day_hours} hours per day, but {0-4:non_billable_hours} of those hours will go towards sustaining your business and not client work. You will have :hourglass_flowing_sand: {=(work_days * (day_hours - non_billable_hours)):billable_hours} billable hours per year
+
+
+
+You should charge at least ${=taxes_salary / billable_hours:hourly_rate} an hour.

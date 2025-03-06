@@ -78,6 +78,71 @@ Exp.functions.monthsToGoalBalanceViaCompoundInterest = function (
   return monthsPassed;
 };
 
+Exp.functions.marginalTaxRate = function (income, ...brackets) {
+  if (brackets.length === 0 || brackets[0] === undefined) {
+    // If no brackets provided, use 2025 US single filer tax brackets as default
+    brackets = [
+      [0, 10], // 10% on first $11,925
+      [11925, 12], // 12% on $11,926 to $48,475
+      [48475, 22], // 22% on $48,476 to $103,350
+      [103350, 24], // 24% on $103,351 to $197,300
+      [197300, 32], // 32% on $197,301 to $250,525
+      [250525, 35], // 35% on $250,526 to $626,350
+      [626350, 37], // 37% on amounts over $626,350
+    ];
+  } else {
+    // Validate brackets - they should be pairs of [income, percent]
+    const isValid = brackets.every(
+      (bracket) =>
+        Array.isArray(bracket) &&
+        bracket.length === 2 &&
+        typeof bracket[0] === "number" &&
+        typeof bracket[1] === "number"
+    );
+
+    if (!isValid) {
+      throw new Error(
+        "Tax brackets must be an array of [income, percent] pairs"
+      );
+    }
+
+    // Sort brackets by income threshold (ascending)
+    brackets.sort((a, b) => a[0] - b[0]);
+
+    // First bracket should start at 0
+    if (brackets[0][0] !== 0) {
+      brackets.unshift([0, brackets[0][1]]);
+    }
+  }
+
+  // Parse income as number if it's a string
+  income = Number(income);
+
+  // Calculate tax based on brackets
+  let remainingIncome = income;
+  let totalTax = 0;
+
+  for (let i = 0; i < brackets.length; i++) {
+    const [threshold, rate] = brackets[i];
+    const nextThreshold =
+      i < brackets.length - 1 ? brackets[i + 1][0] : Infinity;
+    const taxableInThisBracket = Math.min(
+      remainingIncome,
+      nextThreshold - threshold
+    );
+
+    if (taxableInThisBracket <= 0) break;
+
+    totalTax += taxableInThisBracket * (rate / 100);
+    remainingIncome -= taxableInThisBracket;
+
+    if (remainingIncome <= 0) break;
+  }
+
+  // Return the effective tax rate as a percentage, precise to 2 decimal places
+  return parseFloat((totalTax / income).toFixed(4));
+};
+
 // Same as above, but we don't know value yet
 function makeExpression(parseResult, kind) {
   const [expression, variable] = parseResult;
@@ -181,36 +246,52 @@ const docParser = P.createLanguage({
 });
 
 function parse(text) {
-  const ast = docParser.Doc.tryParse(text);
+  try {
+    const ast = docParser.Doc.tryParse(text);
 
-  const concatted = ast.reduce((arr, el, i) => {
-    if (el.type === "text") {
-      const pos = arr.length - 1;
-      if (arr[pos] && arr[pos].type === "text") {
-        arr[pos].value = arr[pos].value + el.value;
-        return arr;
-      } else {
-        return arr.concat(el);
+    const concatted = ast.reduce((arr, el, i) => {
+      if (el.type === "text") {
+        const pos = arr.length - 1;
+        if (arr[pos] && arr[pos].type === "text") {
+          arr[pos].value = arr[pos].value + el.value;
+          return arr;
+        } else {
+          return arr.concat(el);
+        }
       }
-    }
-    return arr.concat(el);
-  }, []);
+      return arr.concat(el);
+    }, []);
 
-  let state = concatted.reduce(function (obj, value) {
-    if (value.type === "statement") {
-      Object.assign(obj, { [value.variable]: value.value.value });
-    } else if (value.type === "expression") {
-      Object.assign(obj, { [value.variable]: value.value });
-    }
-    return obj;
-  }, {});
+    let state = concatted.reduce(function (obj, value) {
+      if (value.type === "statement") {
+        Object.assign(obj, { [value.variable]: value.value.value });
+      } else if (value.type === "expression") {
+        Object.assign(obj, { [value.variable]: value.value });
+      }
+      return obj;
+    }, {});
 
-  const mathed = concatted.filter((o) => o.type === "expression");
-  mathed.map((el) => {
-    state[el.variable] = el.eval(state);
-    return true;
-  });
-  return [concatted, state];
+    const mathed = concatted.filter((o) => o.type === "expression");
+    mathed.map((el) => {
+      try {
+        state[el.variable] = el.eval(state);
+      } catch (evalError) {
+        throw new Error(
+          `Error evaluating expression '${el.expression}': ${evalError.message}`
+        );
+      }
+      return true;
+    });
+    return [concatted, state];
+  } catch (error) {
+    // Enhance error message with more context
+    if (error.message.includes("expect")) {
+      // Typical parsimmon error - enhance it
+      throw new Error(
+        `Parsing error: ${error.message}\nCheck your syntax for missing brackets or invalid expressions.`
+      );
+    }
+    throw error;
+  }
 }
-
 export default parse;

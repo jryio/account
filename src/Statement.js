@@ -1,28 +1,42 @@
 import numeral from "numeral";
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import "./Statement.css";
 
 function Statement(props) {
   const [isEditing, setIsEditing] = useState(false);
   const [inputValue, setInputValue] = useState(props.valueFromState);
+  const inputRef = useRef(null);
+  const hiddenTextRef = useRef(null);
 
-  // Handle click on the statement to enable editing
-  const handleClick = () => {
-    if (!isEditing) {
-      setIsEditing(true);
-      setInputValue(props.valueFromState);
+  // Update input width to match content
+  useEffect(() => {
+    if (inputRef.current && hiddenTextRef.current) {
+      const displayValue = isEditing
+        ? inputValue
+        : numeral(props.valueFromState).format(props.value.formatString);
 
-      // Use timeout to allow DOM to update before calculating width
-      setTimeout(() => {
-        const input = document.querySelector(".statement-input");
-        if (input) {
-          // Set minimum width based on content
-          const textWidth = String(props.valueFromState).length * 20; // Approximate width per character
-          input.style.width = `${Math.max(50, textWidth)}px`;
-          input.select(); // Select all text when focusing
-        }
-      }, 0);
+      // Update the hidden span with current text
+      hiddenTextRef.current.textContent = displayValue;
+
+      // Get the width of the text content (+1ch for buffer space)
+      const textWidth = hiddenTextRef.current.offsetWidth;
+
+      // Apply width to the input with a small buffer
+      inputRef.current.style.width = `${Math.max(textWidth, 10)}px`;
     }
+  }, [inputValue, props.valueFromState, props.value.formatString, isEditing]);
+
+  // Handle input focus
+  const handleFocus = () => {
+    setIsEditing(true);
+    setInputValue(props.valueFromState);
+
+    // Select all text when focusing
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.select();
+      }
+    }, 0);
   };
 
   // Handle input change
@@ -37,8 +51,7 @@ function Statement(props) {
       const newValue = Number(inputValue);
 
       if (!isNaN(newValue)) {
-        // Update the state via the addField function passed down from Section
-        // No min/max constraints here - allow any valid number
+        // Update the state via the addField function
         props.addField(props.variable, newValue);
       } else {
         // If invalid input, revert to the previous value
@@ -49,29 +62,33 @@ function Statement(props) {
     }
   };
 
-  // Format the display value
+  // Get the formatted value for display
   const formattedValue = numeral(props.valueFromState).format(
     props.value.formatString
   );
 
-  // Render the component
   return (
-    <span className="statement" onClick={handleClick}>
+    <span className="statement">
       {props.format === "dollar" ? "$" : ""}
 
-      {isEditing ? (
+      <span className="input-wrapper">
         <input
+          ref={inputRef}
           type="text"
-          value={inputValue}
+          value={isEditing ? inputValue : formattedValue}
           onChange={handleChange}
+          onFocus={handleFocus}
           onKeyDown={handleSubmit}
           onBlur={handleSubmit}
-          autoFocus
-          className="statement-input"
+          className={`statement-input ${isEditing ? "editing" : ""}`}
         />
-      ) : (
-        formattedValue
-      )}
+        {/* Hidden element used to measure text width */}
+        <span
+          ref={hiddenTextRef}
+          className="hidden-text"
+          aria-hidden="true"
+        ></span>
+      </span>
 
       {props.format === "percentage" ? "%" : ""}
     </span>
